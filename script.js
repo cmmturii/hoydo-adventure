@@ -22,7 +22,7 @@ const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzt5bZCCWLwZkA
 async function handleSubmit(e) {
   e.preventDefault();
 
-  const form = document.getElementById('bookingForm');
+ const form = e.target;
   const btn  = form.querySelector('.btn-submit');
 
   // Get form data
