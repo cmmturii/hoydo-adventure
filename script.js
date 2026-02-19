@@ -19,13 +19,7 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('DOMContentLoaded', function () {
 
   var form = document.querySelector('.booking-form');
-
-  if (!form) {
-    console.error('Booking form not found!');
-    return;
-  }
-
-  console.log('Booking form found');
+  if (!form) { console.error('Form not found'); return; }
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -34,39 +28,36 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.textContent = 'Sending...';
     btn.disabled = true;
 
-    var data = {
-      name:      form.querySelector('[name="name"]').value,
-      phone:     form.querySelector('[name="phone"]').value,
-      email:     form.querySelector('[name="email"]').value,
-      date:      form.querySelector('[name="date"]').value,
-      adventure: form.querySelector('[name="adventure"]').value,
-      group:     form.querySelector('[name="group"]').value,
-      message:   form.querySelector('[name="message"]').value
-    };
+    var formData = new FormData(form);
 
-    // Send to Formspree
+    // Send to Formspree using FormData (most reliable method)
     fetch('https://formspree.io/f/mrealojj', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data)
+      body: formData,
+      headers: { 'Accept': 'application/json' }
     })
-    .then(function(res) { return res.json(); })
-    .then(function() {
-      // Send to Google Sheets
-      fetch('https://script.google.com/macros/s/AKfycbzt5bZCCWLwZkAHg-u6JnPF42cHO4iRyEzmvTXjNs5REYGTEQ7pqX3ymhKKKd134iqS/exec', {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      btn.textContent = 'Booking Sent!';
-      btn.style.background = '#2ecc71';
-      form.reset();
-      setTimeout(function() {
-        btn.textContent = 'Send Booking Request';
-        btn.style.background = '';
-        btn.disabled = false;
-      }, 4000);
+    .then(function(res) {
+      if (res.ok) {
+        // Also send to Google Sheets
+        var data = {};
+        formData.forEach(function(value, key) { data[key] = value; });
+        fetch('https://script.google.com/macros/s/AKfycbzt5bZCCWLwZkAHg-u6JnPF42cHO4iRyEzmvTXjNs5REYGTEQ7pqX3ymhKKKd134iqS/exec', {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(data)
+        });
+
+        btn.textContent = 'Booking Sent!';
+        btn.style.background = '#2ecc71';
+        form.reset();
+        setTimeout(function() {
+          btn.textContent = 'Send Booking Request';
+          btn.style.background = '';
+          btn.disabled = false;
+        }, 4000);
+      } else {
+        throw new Error('Formspree error');
+      }
     })
     .catch(function(err) {
       console.error('Error:', err);
